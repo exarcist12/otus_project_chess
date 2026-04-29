@@ -1,0 +1,16 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: game-service
+
+datastore:
+  service:
+    url: http://localhost:8082
+
+logging:
+  level:
+    ru.chess: DEBUG
+    org.springframework.web.socket: DEBUG
+    org.springframework.messaging: DEBUG

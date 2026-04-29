@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Chess Game - Multiplayer Chess</title>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- chess.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <!-- chessboard.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css" />
+    <!-- WebSocket -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #eee;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        .chess-section {
+            background: #2c2c3a;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        .chat-section {
+            background: #2c2c3a;
+            border-radius: 16px;
+            padding: 20px;
+            width: 350px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+        #board-container {
+            width: 480px;
+            height: 480px;
+            margin: 0 auto;
+        }
+        /*#board-container {*/
+        /*    width: 480px;*/
+        /*    height: 480px;*/
+        /*    margin: 0 auto;*/
+        /*}*/
+        /*#board-container .chessboard {*/
+        /*    width: 480px;*/
+        /*    height: 480px;*/
+        /*}*/
+        .game-info {
+            margin-top: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            padding: 10px;
+            background: #1a1a2e;
+            border-radius: 8px;
+        }
+        button {
+            background: #4a4a6a;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 15px;
+            width: 100%;
+        }
+        button:hover {
+            background: #6a6a8a;
+            transform: translateY(-2px);
+        }
+        button:disabled {
+            background: #3a3a4a;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .hidden {
+            display: none;
+        }
+        .log {
+            background: #1a1a2e;
+            border-radius: 8px;
+            padding: 10px;
+            height: 400px;
+            overflow-y: auto;
+            font-size: 13px;
+            font-family: monospace;
+            margin-top: 10px;
+        }
+        .chat-input {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .chat-input input {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #4a4a6a;
+            background: #1a1a2e;
+            color: white;
+        }
+        .chat-input button {
+            margin-top: 0;
+            width: auto;
+        }
+        .login-form {
+            background: #2c2c3a;
+            padding: 30px;
+            border-radius: 16px;
+            width: 350px;
+            margin: 100px auto;
+            text-align: center;
+        }
+        .login-form input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid #4a4a6a;
+            background: #1a1a2e;
+            color: white;
+        }
+        .error {
+            color: #ff6b6b;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        h1, h3, h4 {
+            margin: 0 0 15px 0;
+            text-align: center;
+        }
+        .status-badge {
+            background: #4a4a6a;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="login-form" id="loginForm">
+    <h1>♜ Online Chess</h1>
+    <input type="text" id="username" placeholder="Username" />
+    <input type="password" id="password" placeholder="Password" />
+    <button onclick="login()">Login</button>
+    <div id="loginError" class="error"></div>
+</div>
+
+<div id="gameContainer" class="container hidden">
+    <div class="chess-section">
+        <h3>Chess Board</h3>
+        <div id="board-container"></div>
+        <div class="game-info">
+            <span id="gameStatus">Click "Find Game" to start</span>
+        </div>
+        <button id="findMatchBtn" onclick="findMatch()">Find Game</button>
+        <div id="matchStatus" class="status-badge"></div>
+    </div>
+
+    <div class="chat-section">
+        <h3>💬 Chat</h3>
+        <div id="chatMessages" class="log"></div>
+        <div class="chat-input">
+            <input type="text" id="message" placeholder="Type message..." />
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let stompClient = null;
+    let authenticated = false;
+    let playerInfo = null;
+    let currentRoomId = null;
+    let myColor = null;
+    let board = null;
+    let game = null;
+    let mySessionId = null;
+
+    function logChat(msg, type = 'info') {
+        const logDiv = document.getElementById('chatMessages');
+        const color = type === 'error' ? '#ff6b6b' : (type === 'system' ? '#4ecdc4' : '#eee');
+        logDiv.innerHTML += `<div style="color:${color}; margin-bottom:5px;">${new Date().toLocaleTimeString()} - ${msg}</div>`;
+        logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    function showLoginError(msg) {
+        document.getElementById('loginError').innerText = msg;
+    }
+
+    function updateGameStatus() {
+        if (!game) return;
+        let status = '';
+        if (game.game_over()) {
+            if (game.in_checkmate()) status = '🏆 Checkmate! Game over.';
+            else if (game.in_stalemate()) status = '♾️ Stalemate! Game over.';
+            else status = 'Game over.';
+        } else {
+            if (game.in_check()) status = '⚠️ CHECK! ';
+            status += `${game.turn() === 'w' ? 'White' : 'Black'} to move`;
+            if (!isMyTurn()) status += ' (waiting)';
+        }
+        document.getElementById('gameStatus').innerHTML = status;
+    }
+
+    function isMyTurn() {
+        if (!game || !myColor) return false;
+        return (myColor === 'w' && game.turn() === 'w') ||
+            (myColor === 'b' && game.turn() === 'b');
+    }
+
+    function onDragStart(source, piece) {
+        if (!isMyTurn()) return false;
+        const pieceColor = piece.charAt(0);
+        return (myColor === 'w' && pieceColor === 'w') || (myColor === 'b' && pieceColor === 'b');
+    }
+
+    let isWaitingForResponse = false;
+
+    function onDrop(source, target) {
+        if (!isMyTurn()) return 'snapback';
+        if (isWaitingForResponse) return 'snapback';
+
+        // Локальная проверка через chess.js
+        const move = game.move({
+            from: source,
+            to: target,
+            promotion: 'q'
+        });
+
+        if (!move) {
+            logChat(`❌ Invalid move: ${source} → ${target}`, 'error');
+            return 'snapback';
+        }
+
+        // Откатываем локальный ход (будем ждать подтверждения от сервера)
+        game.undo();
+
+        isWaitingForResponse = true;
+
+        stompClient.send('/app/move', {}, JSON.stringify({
+            roomId: currentRoomId,
+            from: source,
+            to: target,
+            promotion: 'q'
+        }));
+
+        setTimeout(() => { isWaitingForResponse = false; }, 500);
+        return 'snapback';
+    }
+
+    function initChessboard() {
+        const boardContainer = document.getElementById('board-container');
+        if (!boardContainer) {
+            console.error('Board container not found');
+            return;
+        }
+
+        boardContainer.innerHTML = '';
+
+        setTimeout(() => {
+            game = new Chess();
+            const config = {
+                position: 'start',
+                draggable: true,
+                onDragStart: onDragStart,
+                onDrop: onDrop,
+                orientation: myColor === 'w' ? 'white' : 'black',
+                pieceTheme: 'https://cdn.rawgit.com/ornicar/chessboardjs/master/img/chesspieces/wikipedia/{piece}.png'
+            };
+            board = Chessboard('board-container', config);
+            updateGameStatus();
+            logChat(`🎯 Board ready. You play as ${myColor === 'w' ? 'WHITE' : 'BLACK'}`, 'system');
+        }, 100);
+    }
+
+    function login() {
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value.trim();
+        if (!username || !password) {
+            showLoginError('Enter credentials');
+            return;
+        }
+        showLoginError('');
+        logChat(`Logging in as ${username}...`, 'system');
+
+        const socket = new SockJS('http://localhost:8081/chess-websocket');
+        stompClient = Stomp.over(socket);
+        stompClient.debug = console.debug;
+
+        stompClient.connect({}, function() {
+            logChat('WebSocket connected', 'system');
+
+            stompClient.subscribe('/topic/login-response', function(msg) {
+                const response = JSON.parse(msg.body);
+                if (!mySessionId && response.success) {
+                    mySessionId = response.sessionId;
+                }
+                if (response.sessionId === mySessionId && response.success && response.player) {
+                    playerInfo = response.player;
+                    authenticated = true;
+                    document.getElementById('loginForm').style.display = 'none';
+                    document.getElementById('gameContainer').classList.remove('hidden');
+                    logChat(`✅ Welcome ${playerInfo.name} (Rating: ${playerInfo.rating})`, 'system');
+                }
+            });
+
+            stompClient.subscribe('/topic/match-found', function(msg) {
+                const event = JSON.parse(msg.body);
+                if (playerInfo && event.players && event.players.includes(playerInfo.id)) {
+                    currentRoomId = event.roomId;
+                    myColor = event.players[0] === playerInfo.id ? 'w' : 'b';
+                    logChat(`🎉 MATCH FOUND! You are ${myColor === 'w' ? 'WHITE' : 'BLACK'}`, 'system');
+
+                    document.getElementById('matchStatus').innerHTML = `✅ In room ${currentRoomId} — You are ${myColor === 'w' ? 'WHITE' : 'BLACK'}`;
+                    document.getElementById('findMatchBtn').disabled = true;
+
+                    initChessboard();
+
+                    stompClient.subscribe('/topic/game/' + currentRoomId, function(updateMsg) {
+                        const session = JSON.parse(updateMsg.body);
+                        console.log('Received game state:', session.fen);
+                        if (session.fen && game) {
+                            const beforeFen = game.fen();
+                            game.load(session.fen);
+                            const afterFen = game.fen();
+                            console.log('Board updated:', beforeFen, '->', afterFen);
+                            board.position(game.fen());
+                            updateGameStatus();
+                        }
+                    });
+
+                    stompClient.subscribe('/user/queue/errors', function(errorMsg) {
+                        logChat(`❌ ${errorMsg.body}`, 'error');
+                    });
+                }
+            });
+
+            stompClient.subscribe('/topic/room/' + (currentRoomId || 'temp'), function(msg) {
+                if (currentRoomId) {
+                    const message = JSON.parse(msg.body);
+                    if (message.sender !== playerInfo?.name) {
+                        logChat(`💬 ${message.sender}: ${message.content}`, 'info');
+                    }
+                }
+            });
+
+            stompClient.send('/app/login', {}, JSON.stringify({username, password}));
+        });
+    }
+
+    function findMatch() {
+        if (!authenticated || !stompClient) {
+            logChat('❌ Not logged in', 'error');
+            return;
+        }
+        stompClient.send('/app/find-match', {}, {});
+        logChat('🔍 Searching for opponent...', 'system');
+        document.getElementById('matchStatus').innerHTML = '🔍 Searching...';
+        document.getElementById('gameStatus').innerHTML = 'Searching for opponent...';
+    }
+
+    function sendMessage() {
+        if (!authenticated || !currentRoomId || !stompClient) {
+            logChat('❌ Not in a room', 'error');
+            return;
+        }
+        const content = document.getElementById('message').value.trim();
+        if (!content) return;
+
+        stompClient.send('/app/chat-room', {}, JSON.stringify({
+            roomId: currentRoomId,
+            content: content,
+            timestamp: new Date().toLocaleTimeString()
+        }));
+        document.getElementById('message').value = '';
+    }
+</script>
+</body>
+</html>
