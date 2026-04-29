@@ -16,7 +16,6 @@
 <body>
 <h3>♜ Chess Game</h3>
 
-<!-- Форма логина -->
 <div id="loginForm">
     <input type="text" id="username" placeholder="Username" />
     <input type="password" id="password" placeholder="Password" />
@@ -24,19 +23,16 @@
     <div id="loginError" class="error"></div>
 </div>
 
-<!-- Панель после логина (поиск соперника) -->
 <div id="gameContainer" class="hidden">
     <button id="startBtn" onclick="startMatch()">Start</button>
     <div id="matchStatus"></div>
 </div>
 
-<!-- Чат (появляется после нахождения соперника) -->
 <div id="chatArea" class="hidden">
     <input type="text" id="message" placeholder="Type message..." />
     <button onclick="sendMessage()">Send</button>
 </div>
 
-<!-- Общий лог -->
 <div id="log" class="log"></div>
 
 <script>
@@ -71,16 +67,13 @@
         const socket = new SockJS('http://localhost:8081/chess-websocket');
         stompClient = Stomp.over(socket);
         stompClient.connect({}, function(frame) {
-            // Получаем sessionId из заголовков
             mySessionId = frame.headers['session-id'];
             log('WebSocket connected. Session: ' + mySessionId, 'system');
 
-            // Подписка на ответы логина
             stompClient.subscribe('/topic/login-response', function(msg) {
                 const response = JSON.parse(msg.body);
                 console.log('Login response received:', response);
 
-                // Временно убираем фильтрацию — показываем кнопку при любом успешном логине
                 if (response.success) {
                     playerInfo = response.player;
                     authenticated = true;
@@ -93,7 +86,6 @@
                 }
             });
 
-            // Подписка на match-found
             stompClient.subscribe('/topic/match-found', function(msg) {
                 const event = JSON.parse(msg.body);
                 if (playerInfo && event.players.includes(playerInfo.id)) {
@@ -111,7 +103,6 @@
                 }
             });
 
-            // Отправляем логин
             stompClient.send('/app/login', {}, JSON.stringify({username, password}));
         });
     }

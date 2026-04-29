@@ -18,19 +18,12 @@ repositories {
 }
 
 dependencies {
-    // Spring Boot WebSocket
     implementation("org.springframework.boot:spring-boot-starter-websocket")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("com.github.bhlangonijr:chesslib:1.3.6")
-
-    // Spring Messaging (для STOMP)
     implementation("org.springframework:spring-messaging")
-
-    // Lombok
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
-
-    // Тесты
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
 

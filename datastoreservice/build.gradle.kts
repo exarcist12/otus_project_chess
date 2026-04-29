@@ -17,24 +17,14 @@ repositories {
 }
 
 dependencies {
-    // Spring Boot Web
+
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.flywaydb:flyway-core")
-
-    // Spring Data JPA (Hibernate)
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-
-    // PostgreSQL
     runtimeOnly("org.postgresql:postgresql")
-
-    // Lombok
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
-
-    // Validation
     implementation("org.springframework.boot:spring-boot-starter-validation")
-
-    // Для тестов
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
 
