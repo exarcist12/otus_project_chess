@@ -37,4 +37,6 @@ public class PlayerController {
         log.info("PATCH /api/v1/players/{}/rating?newRating={}", id, newRating);
         playerService.updateRating(id, newRating);
     }
+
+
 }

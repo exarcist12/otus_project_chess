@@ -98,4 +98,36 @@ public class DataStoreClient {
             log.error("Failed to save game: {}", e.getMessage());
         }
     }
+
+    public void updateRating(String playerId, int newRating) {
+        try {
+            String url = dataStoreUrl + "/api/v1/players/" + playerId + "/rating?newRating=" + newRating;
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .method("PATCH", HttpRequest.BodyPublishers.noBody())
+                    .build();
+            httpClient.send(request, HttpResponse.BodyHandlers.discarding());
+            log.info("Rating updated for {}: {}", playerId, newRating);
+        } catch (Exception e) {
+            log.error("Failed to update rating for {}: {}", playerId, e.getMessage());
+        }
+    }
+
+    public PlayerDTO getPlayerInfo(String playerId) {
+        try {
+            String url = dataStoreUrl + "/api/v1/players/" + playerId;
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .GET()
+                    .build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() == 200) {
+                return objectMapper.readValue(response.body(), PlayerDTO.class);
+            }
+            return null;
+        } catch (Exception e) {
+            log.error("Failed to get player info for {}: {}", playerId, e.getMessage());
+            return null;
+        }
+    }
 }

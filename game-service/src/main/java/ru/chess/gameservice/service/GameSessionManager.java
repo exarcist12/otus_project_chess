@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.chess.gameservice.client.DataStoreClient;
 import ru.chess.gameservice.dto.GameResultDTO;
+import ru.chess.gameservice.dto.PlayerDTO;
 import ru.chess.gameservice.model.GameSession;
 
 import java.time.Instant;
@@ -62,7 +63,6 @@ public class GameSessionManager {
         session.setFinishedAt(Instant.now());
         session.setActive(false);
 
-        // Сохраняем результат в DataStore
         GameResultDTO result = new GameResultDTO();
         result.setWhitePlayerId(session.getWhitePlayerId());
         result.setBlackPlayerId(session.getBlackPlayerId());
@@ -79,5 +79,26 @@ public class GameSessionManager {
         dataStoreClient.saveGameResult(result);
 
         log.info("Game ended: {} - winner: {} ({})", gameId, winnerId, reason);
+
+        if (winnerId != null) {
+            PlayerDTO winner = dataStoreClient.getPlayerInfo(winnerId);
+            String loserId = winnerId.equals(session.getWhitePlayerId())
+                    ? session.getBlackPlayerId()
+                    : session.getWhitePlayerId();
+            PlayerDTO loser = dataStoreClient.getPlayerInfo(loserId);
+
+            if (winner != null && loser != null) {
+                int newWinnerRating = winner.getRating() + 50;
+                int newLoserRating = loser.getRating() - 50;
+                if (newLoserRating < 0) newLoserRating = 0;
+
+                dataStoreClient.updateRating(winnerId, newWinnerRating);
+                dataStoreClient.updateRating(loserId, newLoserRating);
+
+                log.info("Rating updated: {} {} -> {}, {} {} -> {}",
+                        winnerId, winner.getRating(), newWinnerRating,
+                        loserId, loser.getRating(), newLoserRating);
+            }
+        }
     }
 }

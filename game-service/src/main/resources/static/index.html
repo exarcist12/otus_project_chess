@@ -198,6 +198,7 @@
     let board = null;
     let game = null;
     let mySessionId = null;
+    let gameSubscription = null;
 
     function logChat(msg, type = 'info') {
         const logDiv = document.getElementById('chatMessages');
@@ -326,7 +327,6 @@
                     logChat(`✅ Welcome ${playerInfo.name} (Rating: ${playerInfo.rating})`, 'system');
                 }
             });
-
             stompClient.subscribe('/topic/match-found', function(msg) {
                 const event = JSON.parse(msg.body);
                 if (playerInfo && event.players && event.players.includes(playerInfo.id)) {
@@ -339,7 +339,11 @@
 
                     initChessboard();
 
-                    stompClient.subscribe('/topic/game/' + currentRoomId, function(updateMsg) {
+
+                    if (gameSubscription) {
+                        gameSubscription.unsubscribe();
+                    }
+                    gameSubscription = stompClient.subscribe('/topic/game/' + currentRoomId, function(updateMsg) {
                         const session = JSON.parse(updateMsg.body);
                         console.log('Received game state:', session.fen);
                         if (session.fen && game) {

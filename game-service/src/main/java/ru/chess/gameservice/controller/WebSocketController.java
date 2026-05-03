@@ -150,16 +150,4 @@ public class WebSocketController {
     }
 
 
-    @MessageMapping("/test-save")
-    public void testSave() {
-        GameResultDTO result = new GameResultDTO();
-        result.setWhitePlayerId("player1");
-        result.setBlackPlayerId("player2");
-        result.setWinnerId("player1");
-        result.setMoves("e2e4,e7e5");
-        result.setStartedAt(Instant.now().toString());
-        result.setFinishedAt(Instant.now().toString());
-        dataStoreClient.saveGameResult(result);
-        log.info("Test save executed");
-    }
 }
