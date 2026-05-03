@@ -10,6 +10,7 @@ import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.stereotype.Controller;
 import ru.chess.gameservice.client.DataStoreClient;
+import ru.chess.gameservice.dto.GameResultDTO;
 import ru.chess.gameservice.dto.LoginRequestDTO;
 import ru.chess.gameservice.dto.MoveRequest;
 import ru.chess.gameservice.dto.PlayerDTO;
@@ -21,6 +22,7 @@ import ru.chess.gameservice.service.GameSessionManager;
 import ru.chess.gameservice.service.MatchmakingService;
 import ru.chess.gameservice.service.SessionService;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -133,8 +135,31 @@ public class WebSocketController {
 
         gameSessionManager.updateGame(session);
 
+        if (chessEngine.isGameOver(newFen)) {
+            String winnerId = chessEngine.isCheck(newFen)
+                    ? (session.getCurrentTurn().equals("w") ? session.getBlackPlayerId() : session.getWhitePlayerId())
+                    : null;
 
+            gameSessionManager.endGame(moveRequest.getRoomId(), winnerId,
+                    winnerId == null ? "STALEMATE" : "CHECKMATE");
+
+            log.info("Game over! Winner: {}", winnerId == null ? "Draw (stalemate)" : winnerId);
+        }
 
         messagingTemplate.convertAndSend("/topic/game/" + moveRequest.getRoomId(), session);
+    }
+
+
+    @MessageMapping("/test-save")
+    public void testSave() {
+        GameResultDTO result = new GameResultDTO();
+        result.setWhitePlayerId("player1");
+        result.setBlackPlayerId("player2");
+        result.setWinnerId("player1");
+        result.setMoves("e2e4,e7e5");
+        result.setStartedAt(Instant.now().toString());
+        result.setFinishedAt(Instant.now().toString());
+        dataStoreClient.saveGameResult(result);
+        log.info("Test save executed");
     }
 }

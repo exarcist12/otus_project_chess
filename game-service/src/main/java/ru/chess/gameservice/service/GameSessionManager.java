@@ -47,6 +47,10 @@ public class GameSessionManager {
      * Завершить игру и сохранить результат в БД
      */
     public void endGame(String gameId, String winnerId, String reason) {
+
+        log.info("=== END GAME CALLED ===");
+        log.info("GameId: {}, Winner: {}, Reason: {}", gameId, winnerId, reason);
+
         GameSession session = activeGames.remove(gameId);
         if (session == null) {
             log.warn("Game session not found: {}", gameId);
@@ -64,8 +68,13 @@ public class GameSessionManager {
         result.setBlackPlayerId(session.getBlackPlayerId());
         result.setWinnerId(winnerId);
         result.setMoves(String.join(",", session.getMoveHistory()));
-        result.setStartedAt(session.getStartedAt());
-        result.setFinishedAt(session.getFinishedAt());
+        result.setStartedAt(session.getStartedAt().toString());
+        result.setFinishedAt(session.getFinishedAt().toString());
+
+        log.info("Saving game result: {} vs {}, moves: {}",
+                session.getWhitePlayerId(),
+                session.getBlackPlayerId(),
+                session.getMoveHistory().size());
 
         dataStoreClient.saveGameResult(result);
 

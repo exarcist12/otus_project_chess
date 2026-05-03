@@ -9,6 +9,6 @@ public class GameResultDTO {
     private String blackPlayerId;
     private String winnerId;
     private String moves;
-    private Instant startedAt;
-    private Instant finishedAt;
+    private String  startedAt;
+    private String  finishedAt;
 }

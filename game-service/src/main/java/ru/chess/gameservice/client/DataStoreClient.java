@@ -2,6 +2,7 @@ package ru.chess.gameservice.client;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -75,6 +76,15 @@ public class DataStoreClient {
     }
 
     public void saveGameResult(GameResultDTO result) {
+
+        log.info("=== SAVE GAME RESULT CALLED ===");
+        log.info("White: {}, Black: {}, Winner: {}, Moves: {}",
+                result.getWhitePlayerId(),
+                result.getBlackPlayerId(),
+                result.getWinnerId(),
+                result.getMoves());
+
+
         try {
             String json = objectMapper.writeValueAsString(result);
             HttpRequest request = HttpRequest.newBuilder()

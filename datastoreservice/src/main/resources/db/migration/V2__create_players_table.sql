@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS players (
     password VARCHAR(255) NOT NULL
     );
 
--- Вставка тестовых игроков (только если их ещё нет)
 INSERT INTO players (id, name, rating, games_played, games_won, password)
 SELECT 'player1', 'Player One', 1200, 0, 0, 'pwd1'
     WHERE NOT EXISTS (SELECT 1 FROM players WHERE id = 'player1');
